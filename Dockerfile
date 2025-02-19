@@ -12,8 +12,9 @@ RUN apk add --no-cache \
     libffi-dev \
     openssl-dev
 
-# Upgrade pip to the latest version
-RUN pip3 install --upgrade pip
+# Ensure pip is installed and upgraded correctly
+RUN python3 -m ensurepip --upgrade
+RUN pip3 install --no-cache-dir --upgrade pip
 
 # Install Python packages
 RUN pip3 install --no-cache-dir \
