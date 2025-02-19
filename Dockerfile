@@ -1,7 +1,7 @@
 ARG BUILD_FROM=ghcr.io/home-assistant/aarch64-base:latest
 FROM $BUILD_FROM
 
-# Install system dependencies, including build tools for Python packages, bashio, and Bluetooth support
+# Install system dependencies required for bleak and Bluetooth
 RUN apk add --no-cache \
     python3 \
     py3-pip \
@@ -13,21 +13,19 @@ RUN apk add --no-cache \
     libffi-dev \
     openssl-dev \
     build-base \
-    jq \
     dbus \
-    dbus-dev \
-    linux-headers
+    dbus-dev
 
 # Check Python version
 RUN python3 --version
 
-# Install bashio
+# Install bashio for Home Assistant add-on compatibility
 RUN mkdir -p /usr/local/bin/bashio && \
     wget -O /usr/local/bin/bashio/bashio "https://github.com/hassio-addons/bashio/archive/main.tar.gz" && \
     tar -xzf /usr/local/bin/bashio/bashio --strip 1 && \
     chmod a+x /usr/local/bin/bashio/bashio
 
-# Ensure pip is installed and upgraded correctly, with multiple retries for network issues
+# Ensure pip is installed and upgraded correctly, with retries
 RUN for i in {1..5}; do \
     python3 -m ensurepip --upgrade && break || sleep 10; \
     done || (echo "Failed to install ensurepip after retries" && exit 1)
@@ -35,23 +33,15 @@ RUN for i in {1..5}; do \
     pip3 install --no-cache-dir --upgrade pip && break || sleep 10; \
     done || (echo "Failed to upgrade pip after retries" && exit 1)
 
-# Install Python packages with retries, verbose output, and fallback to source for bleak
+# Install Python packages with retries, verbose output, and specific bleak version
 RUN for i in {1..5}; do \
     pip3 install --no-cache-dir --verbose \
+        bleak==0.21.1 \
         paho-mqtt && \
     break || sleep 10; \
-    done || (echo "Failed to install paho-mqtt after retries" && exit 1)
+    done || (echo "Failed to install Python packages after retries" && exit 1)
 
-# Attempt to install bleak with specific version and fallback to source if wheel fails
-RUN for i in {1..5}; do \
-    pip3 install --no-cache-dir --verbose \
-        bleak==0.21.1 || \
-    pip3 install --no-cache-dir --verbose \
-        git+https://github.com/hbldh/bleak.git@0.21.1 && \
-    break || sleep 10; \
-    done || (echo "Failed to install bleak after retries" && exit 1)
-
-# Verify bleak installation with detailed logging and error output
+# Verify bleak installation with detailed logging
 RUN python3 -c "import bleak; print('Bleak installed successfully')" || (echo "Bleak installation failed" && pip3 show bleak || pip3 list && echo "Checking logs for details" && exit 1)
 
 # Copy add-on files
