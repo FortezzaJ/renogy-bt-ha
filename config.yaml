@@ -10,21 +10,19 @@ init: false
 startup: "application"
 log: true  # Enable logs in the Home Assistant UI
 options:
+  device_mac: ""
+  device_alias: ""
   mqtt_host: "core-mosquitto"
   mqtt_port: 1883
   mqtt_username: ""
   mqtt_password: ""
-  devices:
-    - address: ""
-      alias: "renogy_battery"
 schema:
+  device_mac: str
+  device_alias: str?
   mqtt_host: str
   mqtt_port: int
   mqtt_username: str
   mqtt_password: str
-  devices:
-    - address: str
-      alias: str
 ports:
   1883/tcp: null
 map:
