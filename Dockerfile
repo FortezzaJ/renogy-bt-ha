@@ -35,13 +35,21 @@ RUN for i in {1..5}; do \
     pip3 install --no-cache-dir --upgrade pip && break || sleep 10; \
     done || (echo "Failed to upgrade pip after retries" && exit 1)
 
-# Install Python packages with retries, verbose output, and specific version for bleak
+# Install Python packages with retries, verbose output, and fallback to source for bleak
 RUN for i in {1..5}; do \
     pip3 install --no-cache-dir --verbose \
-        bleak==0.21.1 \
         paho-mqtt && \
     break || sleep 10; \
-    done || (echo "Failed to install Python packages after retries" && exit 1)
+    done || (echo "Failed to install paho-mqtt after retries" && exit 1)
+
+# Attempt to install bleak with specific version and fallback to source if wheel fails
+RUN for i in {1..5}; do \
+    pip3 install --no-cache-dir --verbose \
+        bleak==0.21.1 || \
+    pip3 install --no-cache-dir --verbose \
+        git+https://github.com/hbldh/bleak.git@0.21.1 && \
+    break || sleep 10; \
+    done || (echo "Failed to install bleak after retries" && exit 1)
 
 # Verify bleak installation with detailed logging and error output
 RUN python3 -c "import bleak; print('Bleak installed successfully')" || (echo "Bleak installation failed" && pip3 show bleak || pip3 list && echo "Checking logs for details" && exit 1)
