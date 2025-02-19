@@ -13,7 +13,13 @@ RUN apk add --no-cache \
     libffi-dev \
     openssl-dev \
     build-base \
-    jq
+    jq \
+    dbus \
+    dbus-dev \
+    linux-headers
+
+# Check Python version
+RUN python3 --version
 
 # Install bashio
 RUN mkdir -p /usr/local/bin/bashio && \
@@ -22,23 +28,23 @@ RUN mkdir -p /usr/local/bin/bashio && \
     chmod a+x /usr/local/bin/bashio/bashio
 
 # Ensure pip is installed and upgraded correctly, with multiple retries for network issues
-RUN for i in {1..3}; do \
-    python3 -m ensurepip --upgrade && break || sleep 5; \
+RUN for i in {1..5}; do \
+    python3 -m ensurepip --upgrade && break || sleep 10; \
     done || (echo "Failed to install ensurepip after retries" && exit 1)
-RUN for i in {1..3}; do \
-    pip3 install --no-cache-dir --upgrade pip && break || sleep 5; \
+RUN for i in {1..5}; do \
+    pip3 install --no-cache-dir --upgrade pip && break || sleep 10; \
     done || (echo "Failed to upgrade pip after retries" && exit 1)
 
-# Install Python packages with retries for network or dependency issues
-RUN for i in {1..3}; do \
-    pip3 install --no-cache-dir \
-        bleak \
+# Install Python packages with retries, verbose output, and specific version for bleak
+RUN for i in {1..5}; do \
+    pip3 install --no-cache-dir --verbose \
+        bleak==0.21.1 \
         paho-mqtt && \
-    break || sleep 5; \
+    break || sleep 10; \
     done || (echo "Failed to install Python packages after retries" && exit 1)
 
-# Verify bleak installation
-RUN python3 -c "import bleak; print('Bleak installed successfully')" || (echo "Bleak installation failed" && exit 1)
+# Verify bleak installation with detailed logging and error output
+RUN python3 -c "import bleak; print('Bleak installed successfully')" || (echo "Bleak installation failed" && pip3 show bleak || pip3 list && echo "Checking logs for details" && exit 1)
 
 # Copy add-on files
 COPY run.sh /run.sh
