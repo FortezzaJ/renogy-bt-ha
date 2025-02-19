@@ -11,10 +11,8 @@ RUN apk add --no-cache \
     musl-dev \
     python3-dev \
     libffi-dev \
-    openssl-dev \
     build-base \
-    dbus \
-    dbus-dev
+    dbus
 
 # Check Python version
 RUN python3 --version
@@ -36,7 +34,7 @@ RUN for i in {1..5}; do \
 # Install Python packages with retries, verbose output, and specific bleak version
 RUN for i in {1..5}; do \
     pip3 install --no-cache-dir --verbose \
-        bleak==0.21.1 \
+        bleak==0.19.5 \
         paho-mqtt && \
     break || sleep 10; \
     done || (echo "Failed to install Python packages after retries" && exit 1)
