@@ -1,4 +1,4 @@
-ARG BUILD_FROM=ghcr.io/home-assistant/armv7-base:latest
+ARG BUILD_FROM=ghcr.io/home-assistant/aarch64-base:latest
 FROM $BUILD_FROM
 
 # Install system dependencies, including build tools for Python packages
