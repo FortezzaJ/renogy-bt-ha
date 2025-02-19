@@ -4,6 +4,7 @@ version: "1.0.0"
 slug: "renogy_bt_ha"
 arch:
   - aarch64
+  - amd64
   - armv7
 init: false
 startup: "application"
