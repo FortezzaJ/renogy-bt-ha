@@ -12,7 +12,7 @@ RUN apk add --no-cache \
     libffi-dev \
     openssl-dev \
     build-base \
-    jq  # Required for parsing JSON in run.sh
+    jq
 
 # Install bashio
 RUN mkdir -p /usr/local/bin/bashio && \
@@ -20,15 +20,21 @@ RUN mkdir -p /usr/local/bin/bashio && \
     tar -xzf /usr/local/bin/bashio/bashio --strip 1 && \
     chmod a+x /usr/local/bin/bashio/bashio
 
-# Ensure pip is installed and upgraded correctly, with retries for network issues
-RUN python3 -m ensurepip --upgrade || (sleep 5 && python3 -m ensurepip --upgrade)
-RUN pip3 install --no-cache-dir --upgrade pip || (sleep 5 && pip3 install --no-cache-dir --upgrade pip)
+# Ensure pip is installed and upgraded correctly, with multiple retries for network issues
+RUN for i in {1..3}; do \
+    python3 -m ensurepip --upgrade && break || sleep 5; \
+    done || (echo "Failed to install ensurepip after retries" && exit 1)
+RUN for i in {1..3}; do \
+    pip3 install --no-cache-dir --upgrade pip && break || sleep 5; \
+    done || (echo "Failed to upgrade pip after retries" && exit 1)
 
 # Install Python packages with retries for network or dependency issues
-RUN pip3 install --no-cache-dir \
-    bleak \
-    paho-mqtt \
-    || (sleep 5 && pip3 install --no-cache-dir bleak paho-mqtt)
+RUN for i in {1..3}; do \
+    pip3 install --no-cache-dir \
+        bleak \
+        paho-mqtt && \
+    break || sleep 5; \
+    done || (echo "Failed to install Python packages after retries" && exit 1)
 
 # Copy add-on files
 COPY run.sh /run.sh
