@@ -52,18 +52,19 @@ async def main():
     logger.info("Starting Renogy Bluetooth Monitor...")
     
     # Get configuration from environment variables
-    device_address = os.environ.get("DEVICE_ADDRESS", "")
+    device_mac = os.environ.get("DEVICE_MAC", "")
+    device_alias = os.environ.get("DEVICE_ALIAS", "renogy_battery")
     mqtt_host = os.environ.get("MQTT_HOST", "core-mosquitto")
     mqtt_port = int(os.environ.get("MQTT_PORT", "1883"))
     mqtt_username = os.environ.get("MQTT_USERNAME", "")
     mqtt_password = os.environ.get("MQTT_PASSWORD", "")
 
-    if not device_address:
-        logger.error("Device address not configured. Please set DEVICE_ADDRESS environment variable.")
+    if not device_mac:
+        logger.error("Device MAC address not configured. Please set DEVICE_MAC environment variable.")
         return
 
     # Connect to Renogy device
-    renogy_client = await connect_to_renogy(device_address)
+    renogy_client = await connect_to_renogy(device_mac)
     if not renogy_client:
         logger.error("Could not start monitoring - Renogy connection failed")
         return
@@ -83,7 +84,8 @@ async def main():
             if data:
                 # Parse and publish data (example - adjust based on your needs)
                 parsed_data = {"voltage": data.hex()[:4], "current": data.hex()[4:8]}  # Placeholder parsing
-                await publish_to_mqtt(mqtt_client, f"renogy/{device_address}/status", parsed_data)
+                topic = f"renogy/{device_alias}/status" if device_alias else f"renogy/{device_mac}/status"
+                await publish_to_mqtt(mqtt_client, topic, parsed_data)
             await asyncio.sleep(10)  # Poll every 10 seconds
     except Exception as e:
         logger.error(f"Monitoring loop failed: {e}")
