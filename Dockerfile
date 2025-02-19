@@ -1,11 +1,12 @@
 ARG BUILD_FROM=ghcr.io/home-assistant/aarch64-base:latest
 FROM $BUILD_FROM
 
-# Install system dependencies, including build tools for Python packages and bashio
+# Install system dependencies, including build tools for Python packages, bashio, and Bluetooth support
 RUN apk add --no-cache \
     python3 \
     py3-pip \
     bluez \
+    bluez-dev \
     gcc \
     musl-dev \
     python3-dev \
@@ -35,6 +36,9 @@ RUN for i in {1..3}; do \
         paho-mqtt && \
     break || sleep 5; \
     done || (echo "Failed to install Python packages after retries" && exit 1)
+
+# Verify bleak installation
+RUN python3 -c "import bleak; print('Bleak installed successfully')" || (echo "Bleak installation failed" && exit 1)
 
 # Copy add-on files
 COPY run.sh /run.sh
