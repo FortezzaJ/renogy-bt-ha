@@ -10,16 +10,18 @@ RUN apk add --no-cache \
     musl-dev \
     python3-dev \
     libffi-dev \
-    openssl-dev
+    openssl-dev \
+    build-base
 
-# Ensure pip is installed and upgraded correctly
-RUN python3 -m ensurepip --upgrade
-RUN pip3 install --no-cache-dir --upgrade pip
+# Ensure pip is installed and upgraded correctly, with retries for network issues
+RUN python3 -m ensurepip --upgrade || (sleep 5 && python3 -m ensurepip --upgrade)
+RUN pip3 install --no-cache-dir --upgrade pip || (sleep 5 && pip3 install --no-cache-dir --upgrade pip)
 
-# Install Python packages
+# Install Python packages with retries for network or dependency issues
 RUN pip3 install --no-cache-dir \
-    bleak==0.20.2 \
-    paho-mqtt
+    bleak \
+    paho-mqtt \
+    || (sleep 5 && pip3 install --no-cache-dir bleak paho-mqtt)
 
 # Copy add-on files
 COPY run.sh /run.sh
