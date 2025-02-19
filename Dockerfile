@@ -29,15 +29,15 @@ RUN for i in {1..5}; do \
     done || (echo "Failed to upgrade pip after retries" && exit 1)
 
 # Install Python packages with retries, verbose output, and specific bleak version
-RUN for i in {1..5}; do \
+RUN for i in {1..10}; do \  # Increase retries to 10 for better reliability
     pip3 install --no-cache-dir --verbose \
-        bleak==0.14.0 \
+        bleak==0.12.1 \
         paho-mqtt && \
-    break || sleep 10; \
+    break || sleep 15; \  # Increase delay to 15 seconds
     done || (echo "Failed to install Python packages after retries" && exit 1)
 
 # Verify bleak installation with detailed logging
-RUN python3 -c "import bleak; print('Bleak installed successfully')" || (echo "Bleak installation failed" && pip3 show bleak || pip3 list && echo "Checking logs for details" && exit 1)
+RUN python3 -c "import bleak; print('Bleak installed successfully')" || (echo "Bleak installation failed" && pip3 show bleak || pip3 list && cat /var/log/pip.log && echo "Checking logs for details" && exit 1)
 
 # Copy add-on files
 COPY run.sh /run.sh
