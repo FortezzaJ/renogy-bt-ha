@@ -1,7 +1,7 @@
 ARG BUILD_FROM=ghcr.io/home-assistant/aarch64-base:latest
 FROM $BUILD_FROM
 
-# Install system dependencies required for bleak and Bluetooth
+# Install minimal system dependencies required for bleak and Bluetooth
 RUN apk add --no-cache \
     python3 \
     py3-pip \
@@ -9,10 +9,7 @@ RUN apk add --no-cache \
     bluez-dev \
     gcc \
     musl-dev \
-    python3-dev \
-    libffi-dev \
-    build-base \
-    dbus
+    build-base
 
 # Check Python version
 RUN python3 --version
@@ -34,7 +31,7 @@ RUN for i in {1..5}; do \
 # Install Python packages with retries, verbose output, and specific bleak version
 RUN for i in {1..5}; do \
     pip3 install --no-cache-dir --verbose \
-        bleak==0.19.5 \
+        bleak==0.14.0 \
         paho-mqtt && \
     break || sleep 10; \
     done || (echo "Failed to install Python packages after retries" && exit 1)
