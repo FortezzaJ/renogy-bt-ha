@@ -1,7 +1,7 @@
 ARG BUILD_FROM=ghcr.io/home-assistant/aarch64-base:latest
 FROM $BUILD_FROM
 
-# Install system dependencies, including build tools for Python packages
+# Install system dependencies, including build tools for Python packages and bashio
 RUN apk add --no-cache \
     python3 \
     py3-pip \
@@ -11,7 +11,14 @@ RUN apk add --no-cache \
     python3-dev \
     libffi-dev \
     openssl-dev \
-    build-base
+    build-base \
+    jq  # Required for parsing JSON in run.sh
+
+# Install bashio
+RUN mkdir -p /usr/local/bin/bashio && \
+    wget -O /usr/local/bin/bashio/bashio "https://github.com/hassio-addons/bashio/archive/main.tar.gz" && \
+    tar -xzf /usr/local/bin/bashio/bashio --strip 1 && \
+    chmod a+x /usr/local/bin/bashio/bashio
 
 # Ensure pip is installed and upgraded correctly, with retries for network issues
 RUN python3 -m ensurepip --upgrade || (sleep 5 && python3 -m ensurepip --upgrade)
