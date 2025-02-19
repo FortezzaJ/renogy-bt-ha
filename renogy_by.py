@@ -1,5 +1,6 @@
 import logging
 import asyncio
+import os
 from bleak import BleakClient
 import paho.mqtt.client as mqtt
 import json
@@ -47,11 +48,22 @@ async def publish_to_mqtt(mqtt_client, topic, data):
     except Exception as e:
         logger.error(f"Failed to publish to MQTT: {e}")
 
-async def main(mac_address, mqtt_host, mqtt_port, mqtt_username, mqtt_password):
+async def main():
     logger.info("Starting Renogy Bluetooth Monitor...")
     
+    # Get configuration from environment variables
+    device_address = os.environ.get("DEVICE_ADDRESS", "")
+    mqtt_host = os.environ.get("MQTT_HOST", "core-mosquitto")
+    mqtt_port = int(os.environ.get("MQTT_PORT", "1883"))
+    mqtt_username = os.environ.get("MQTT_USERNAME", "")
+    mqtt_password = os.environ.get("MQTT_PASSWORD", "")
+
+    if not device_address:
+        logger.error("Device address not configured. Please set DEVICE_ADDRESS environment variable.")
+        return
+
     # Connect to Renogy device
-    renogy_client = await connect_to_renogy(mac_address)
+    renogy_client = await connect_to_renogy(device_address)
     if not renogy_client:
         logger.error("Could not start monitoring - Renogy connection failed")
         return
@@ -71,7 +83,7 @@ async def main(mac_address, mqtt_host, mqtt_port, mqtt_username, mqtt_password):
             if data:
                 # Parse and publish data (example - adjust based on your needs)
                 parsed_data = {"voltage": data.hex()[:4], "current": data.hex()[4:8]}  # Placeholder parsing
-                await publish_to_mqtt(mqtt_client, f"renogy/{mac_address}/status", parsed_data)
+                await publish_to_mqtt(mqtt_client, f"renogy/{device_address}/status", parsed_data)
             await asyncio.sleep(10)  # Poll every 10 seconds
     except Exception as e:
         logger.error(f"Monitoring loop failed: {e}")
@@ -81,16 +93,4 @@ async def main(mac_address, mqtt_host, mqtt_port, mqtt_username, mqtt_password):
         mqtt_client.disconnect()
 
 if __name__ == "__main__":
-    # Load configuration from environment or default values
-    import os
-    config = {
-        "devices": [{"address": os.environ.get("DEVICE_ADDRESS", ""), "alias": "renogy_battery"}],
-        "mqtt_host": os.environ.get("MQTT_HOST", "core-mosquitto"),
-        "mqtt_port": int(os.environ.get("MQTT_PORT", "1883")),
-        "mqtt_username": os.environ.get("MQTT_USERNAME", ""),
-        "mqtt_password": os.environ.get("MQTT_PASSWORD", "")
-    }
-    if not config["devices"][0]["address"]:
-        logger.error("Device address not configured. Please set DEVICE_ADDRESS environment variable.")
-        exit(1)
-    asyncio.run(main(config["devices"][0]["address"], config["mqtt_host"], config["mqtt_port"], config["mqtt_username"], config["mqtt_password"]))
+    asyncio.run(main())
