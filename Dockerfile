@@ -1,11 +1,19 @@
-ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base:latest
+ARG BUILD_FROM=ghcr.io/home-assistant/aarch64-base:latest
 FROM $BUILD_FROM
 
-# Install dependencies
+# Install system dependencies, including build tools for Python packages
 RUN apk add --no-cache \
     python3 \
     py3-pip \
-    bluez
+    bluez \
+    gcc \
+    musl-dev \
+    python3-dev \
+    libffi-dev \
+    openssl-dev
+
+# Upgrade pip to the latest version
+RUN pip3 install --upgrade pip
 
 # Install Python packages
 RUN pip3 install --no-cache-dir \
